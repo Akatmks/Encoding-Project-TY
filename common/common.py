@@ -4,10 +4,10 @@ from vsdeband import pfdeband
 from vskernels import Lanczos
 from vsmasktools import Morpho
 import vsmlrt
-from vsmuxtools import src_file
+from vsmuxtools import SourceFilter, src_file
 from vspreview import is_preview
 from vsscale import Rescale, descale_error_mask
-from vstools import depth, DitherType, get_y, join, SPath
+from vstools import core, depth, DitherType, finalize_clip, get_y, join, set_output, SPath, vs
 from vodesfunc import adaptive_grain, ntype4
 
 from .insaneAAMod import insaneAA
@@ -22,8 +22,8 @@ class FilterchainResults(BaseModel):
 
 
 def filterchain(source):
-    amzn_file = src_file(source)
-    src = amzn.init_cut()
+    amzn_file = src_file(source, preview_sourcefilter=SourceFilter.BESTSOURCE)
+    src = amzn_file.init_cut()
     
 
     cclip = src.resize.Bicubic(filter_param_a=0, filter_param_b=0.5, \
@@ -57,8 +57,7 @@ def filterchain(source):
     aa = insaneAA(src, descale_height=864, dehalo=True, alpha=0.75, beta=0.15, nrad=3, mdis=30)
 
     rescale = Rescale(src, height=864, width=1536, kernel=Lanczos(2)).rescale
-    aa_mask = descale_error_mask(src, rescale, thr=0.008, expands=(2, 3, 1), blur=1, tr=1)
-    aa_mask = Morpho.closing(aa_mask, radius=4)
+    aa_mask = descale_error_mask(src, rescale, thr=0.01, expands=(5, 6, 1), blur=2, tr=2)
     aa_mask = core.akarin.Expr([cclip, aa_mask], "x y -")
 
     aa = core.std.MaskedMerge(src, aa, aa_mask)
@@ -70,7 +69,7 @@ def filterchain(source):
     aa_y = get_y(aa)
     b_dn_y = bm3d(aa_y, ref=ref_y, sigma=0.7, tr=2, profile=bm3d.Profile.LOW_COMPLEXITY)
     
-    c_dn_y = bm3d(aa_y, ref=ref_y, sigma=2.4, tr=2, profile=bm3d.Profile.LOW_COMPLEXITY)
+    c_dn_y = bm3d(aa_y, ref=ref_y, sigma=2.7, tr=2, profile=bm3d.Profile.LOW_COMPLEXITY)
     c_db_y = c_dn_y.neo_f3kdb.Deband(range=20, y=108, grainy=0, output_depth=16)
 
     dn_db_y = core.std.MaskedMerge(b_dn_y, c_db_y, cclip)
@@ -80,7 +79,7 @@ def filterchain(source):
     dn_db = join(dn_db_y, dn_uv)
 
 
-    final = adaptive_grain(dn_db, strength=[1.9, 0.4], size=3.16, temporal_average=50, seed=274810, **ntype4)
+    final = adaptive_grain(dn_db, strength=[1.8, 0.36], size=3.26, temporal_average=50, seed=274810, **ntype4)
 
     final = finalize_clip(final)
 
@@ -92,10 +91,11 @@ def filterchain(source):
         set_output(dn_db, "dn_db")
         set_output(core.akarin.Expr([dn_db, aa], ["x y - 10 * 32768 +"]), "dn_db")
         set_output(final, "final")
+        set_output(core.akarin.Expr([depth(final, 16), dn_db], ["x y - 10 * 32768 +"]), "final")
 
 
     return FilterchainResults(src=src, final=final, audio=amzn_file)
     
-    
+
 def mux():
     pass

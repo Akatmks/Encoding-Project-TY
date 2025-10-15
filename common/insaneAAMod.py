@@ -122,7 +122,7 @@ class NNEDI3Mode(Enum):
 
 def insaneAA(clip: VideoNode, external_aa: VideoNode = None, external_mask: VideoNode = None, faster_aa: bool = False,
              eedi3_mode: Union[EEDI3Mode, Tuple[EEDI3Mode, EEDI3Mode]] = EEDI3Mode.CPU, eedi3_device: Union[int, Tuple[int, int]] = -1, eedi3_opt: Union[int, Tuple[int, int]] = 0,
-             nnedi3_mode: Union[NNEDI3Mode, Tuple[NNEDI3Mode, NNEDI3Mode]] = NNEDI3Mode.NNEDI3, nnedi3_device: Union[int, Tuple[int, int]] = -1, nnedi3_opt: Union[int, str, Tuple[Union[int, str], Union[int, str]]] = 0,
+             nnedi3_mode: Union[NNEDI3Mode, Tuple[NNEDI3Mode, NNEDI3Mode]] = NNEDI3Mode.ZNEDI3, nnedi3_device: Union[int, Tuple[int, int]] = -1, nnedi3_opt: Union[int, str, Tuple[Union[int, str], Union[int, str]]] = 0,
              descale_strength: float = 0.3, kernel: str = 'bilinear', bicubic_b: float = 1/3, bicubic_c: float = 1/3, lanczos_taps: int = 3, descale_width: int = None, descale_height: int = 720, pscrn: int = 1,
              alpha: float = 0.2, beta: float = 0.25, gamma: float = 1000.0, nrad: int = 2, mdis: float = 20, nsize: int = 0, nns: int = 4, dehalo: bool = False,
              output_mode: ClipMode = ClipMode.FULL, input_mode: ClipMode = ClipMode.FULL) -> VideoNode:
