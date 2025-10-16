@@ -2,6 +2,8 @@ import os
 import sys
 sys.path.insert(0, os.getcwd())
 
+import __main__
+
 from argparse import ArgumentParser
 from vspreview import is_preview
 import re
@@ -24,4 +26,7 @@ episode = m.group(1)
 filterchain_results = filterchain(source)
 
 if not is_preview():
-    mux(episode, filterchain_results)
+    if "__main__" in dir(__main__): 
+        mux(episode, filterchain_results)
+    else:
+        filterchain_results.final.set_output()
