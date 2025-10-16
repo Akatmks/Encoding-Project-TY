@@ -4,7 +4,9 @@ from vsdeband import pfdeband
 from vskernels import Lanczos
 from vsmasktools import Morpho
 import vsmlrt
-from vsmuxtools import SourceFilter, src_file
+from muxtools import Setup
+from muxtools import mux as vsmux
+from vsmuxtools import do_audio, settings_builder_x265, SourceFilter, src_file, x265
 from vspreview import is_preview
 from vsscale import Rescale, descale_error_mask
 from vstools import core, depth, DitherType, finalize_clip, get_y, join, set_output, SPath, vs
@@ -67,9 +69,9 @@ def filterchain(source):
     ref_y = get_y(ref)
     
     aa_y = get_y(aa)
-    b_dn_y = bm3d(aa_y, ref=ref_y, sigma=0.7, tr=2, profile=bm3d.Profile.LOW_COMPLEXITY)
+    b_dn_y = bm3d(aa_y, ref=ref_y, sigma=0.7, tr=2, profile=bm3d.Profile.NORMAL)
     
-    c_dn_y = bm3d(aa_y, ref=ref_y, sigma=2.7, tr=2, profile=bm3d.Profile.LOW_COMPLEXITY)
+    c_dn_y = bm3d(aa_y, ref=ref_y, sigma=2.4, tr=2, profile=bm3d.Profile.NORMAL)
     c_db_y = c_dn_y.neo_f3kdb.Deband(range=20, y=108, grainy=0, output_depth=16)
 
     dn_db_y = core.std.MaskedMerge(b_dn_y, c_db_y, cclip)
@@ -97,5 +99,15 @@ def filterchain(source):
     return FilterchainResults(src=src, final=final, audio=amzn_file)
     
 
-def mux():
-    pass
+def mux(episode, filterchain_results):
+    setup = Setup(episode)
+
+    settings = settings_builder_x265(hist_scenecut="", frames=filterchain_results.final.num_frames,
+                                     crf=14.00, qcomp=0.70, rect=False,
+                                     asm="avx512")
+    video = x265(settings, resumable=False).encode(filterchain_results.final)
+
+    audio = do_audio(filterchain_results.audio)
+
+    return vsmux(video.to_track(lang="ja", args=["--deterministic", "274810"]),
+               audio.to_track(lang="ja"))
