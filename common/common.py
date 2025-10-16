@@ -1,6 +1,6 @@
 from vsdenoise import bm3d, mc_degrain, nl_means
 from pydantic import BaseModel, ConfigDict
-from vsdeband import pfdeband
+from vsdeband import placebo_deband
 from vskernels import Lanczos
 from vsmasktools import Morpho
 import vsmlrt
@@ -72,7 +72,7 @@ def filterchain(source):
     b_dn_y = bm3d(aa_y, ref=ref_y, sigma=0.7, tr=2, profile=bm3d.Profile.NORMAL)
     
     c_dn_y = bm3d(aa_y, ref=ref_y, sigma=2.4, tr=2, profile=bm3d.Profile.NORMAL)
-    c_db_y = c_dn_y.neo_f3kdb.Deband(range=20, y=108, grainy=0, output_depth=16)
+    c_db_y = placebo_deband(c_dn_y, radius=24.0)
 
     dn_db_y = core.std.MaskedMerge(b_dn_y, c_db_y, cclip)
 
