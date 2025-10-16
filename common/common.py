@@ -105,7 +105,7 @@ def mux(episode, filterchain_results):
     settings = settings_builder_x265(hist_scenecut="", frames=filterchain_results.final.num_frames,
                                      crf=14.00, qcomp=0.70, rect=False,
                                      asm="avx512")
-    video = x265(settings, resumable=False).encode(filterchain_results.final)
+    video = x265(settings, resumable=False, csv=SPath(setup.work_dir) / "x265_log.csv").encode(filterchain_results.final)
 
     audio = do_audio(filterchain_results.audio)
 
