@@ -76,7 +76,7 @@ def filterchain(source):
 
     dn_db_y = core.std.MaskedMerge(b_dn_y, c_db_y, cclip)
 
-    dn_uv = nl_means(aa, ref=ref, h=0.3, planes=[1, 2])
+    dn_uv = nl_means(aa, ref=ref, h=0.3, tr=2, planes=[1, 2])
 
     dn_db = join(dn_db_y, dn_uv)
 
