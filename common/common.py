@@ -10,10 +10,9 @@ from vsmuxtools import do_audio, settings_builder_x265, SourceFilter, src_file, 
 from vspreview import is_preview
 from vsscale import Rescale, descale_error_mask
 from vstools import core, depth, DitherType, finalize_clip, get_y, join, set_output, SPath, vs
-from vodesfunc import adaptive_grain, ntype4
 
 from .insaneAAMod import insaneAA
-from .vodesfuncNoiseMod import adaptive_grain as adaptive_grain_test
+from .vodesfuncNoiseMod import adaptive_grain, ntype4
 
 
 class FilterchainResults(BaseModel):
@@ -82,13 +81,9 @@ def filterchain(source):
     dn_db = join(dn_db_y, dn_uv)
 
 
-    final = adaptive_grain(dn_db, strength=[1.9, 0.38], size=3.26, temporal_average=50, seed=274810, **ntype4)
+    final = adaptive_grain(dn_db, strength=[2.1, 0.42], size=3.26, temporal_average=50, seed=274810, **ntype4)
 
     final = finalize_clip(final)
-
-    final_test = adaptive_grain_test(dn_db, strength=[2.1, 0.42], size=3.26, temporal_average=50, seed=274810, **ntype4)
-    
-    final_test = finalize_clip(final_test)
 
 
     if is_preview():
@@ -99,8 +94,6 @@ def filterchain(source):
         set_output(core.akarin.Expr([dn_db, aa], ["x y - 10 * 32768 +"]), "dn_db")
         set_output(final, "final")
         set_output(core.akarin.Expr([depth(final, 16), dn_db], ["x y - 10 * 32768 +"]), "final")
-        set_output(final_test, "final_test")
-        set_output(core.akarin.Expr([depth(final_test, 16), dn_db], ["x y - 10 * 32768 +"]), "final_test")
 
 
     return FilterchainResults(src=src, final=final, audio=amzn_file)
@@ -110,7 +103,7 @@ def mux(episode, filterchain_results):
     setup = Setup(episode)
 
     settings = settings_builder_x265(hist_scenecut="", frames=filterchain_results.final.num_frames,
-                                     crf=14.00, qcomp=0.70, rect=False,
+                                     crf=14.00, qcomp=0.72, rect=False,
                                      asm="avx512")
     video = x265(settings, resumable=False, csv=SPath(setup.work_dir) / "x265_log.csv").encode(filterchain_results.final)
 

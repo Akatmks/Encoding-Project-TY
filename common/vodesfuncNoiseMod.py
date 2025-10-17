@@ -125,7 +125,7 @@ def adaptive_grain(
     if callable(post_grain):
         grained = post_grain(grained)
 
-    grained = grained.dctf.DCTFilter(factors=inter_factor(1.0))
+    grained = grained.dctf.DCTFilter(factors=inter_factor(1.1))
 
     grained = scaler.scale(grained, clip.width, clip.height)
 
@@ -137,7 +137,7 @@ def adaptive_grain(
     static_blank = clip.std.BlankClip(width, height, length=clip.num_frames, color=normalize_seq(neutral, clip.format.num_planes))
     static_grained = static_blank.noise.Add(strength[0] / 2, strength[1] / 2, type=type, xsize=size[0], ysize=size[1], seed=seed, constant=True, **kwargs)
 
-    lowpassed_static_grained = static_grained.dctf.DCTFilter(factors=intra_factor(1.5))
+    lowpassed_static_grained = static_grained.dctf.DCTFilter(factors=intra_factor(1.6))
 
     static_grained = scaler.scale(static_grained, clip.width, clip.height)
     lowpassed_static_grained = scaler.scale(lowpassed_static_grained, clip.width, clip.height)
