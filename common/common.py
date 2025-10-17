@@ -13,6 +13,7 @@ from vstools import core, depth, DitherType, finalize_clip, get_y, join, set_out
 from vodesfunc import adaptive_grain, ntype4
 
 from .insaneAAMod import insaneAA
+from .vodesfuncNoiseMod import adaptive_grain as adaptive_grain_test
 
 
 class FilterchainResults(BaseModel):
@@ -51,7 +52,7 @@ def filterchain(source):
     continue@ 0.10 > continue@ 0 ?
     """)
     cclip = Morpho.dilation(cclip, radius=2)
-    cclip = Morpho.inflate(cclip, radius=1)
+    cclip = Morpho.inflate(cclip, radius=2)
     cclip = cclip.std.Crop(top=4, bottom=4)
     cclip = depth(cclip, 16, dither_type=DitherType.NONE)
 
@@ -71,7 +72,7 @@ def filterchain(source):
     aa_y = get_y(aa)
     b_dn_y = bm3d(aa_y, ref=ref_y, sigma=0.7, tr=2, profile=bm3d.Profile.NORMAL)
     
-    c_dn_y = bm3d(aa_y, ref=ref_y, sigma=2.4, tr=2, profile=bm3d.Profile.NORMAL)
+    c_dn_y = bm3d(aa_y, ref=ref_y, sigma=2.2, tr=1, profile=bm3d.Profile.NORMAL)
     c_db_y = placebo_deband(c_dn_y, radius=24.0)
 
     dn_db_y = core.std.MaskedMerge(b_dn_y, c_db_y, cclip)
@@ -81,9 +82,13 @@ def filterchain(source):
     dn_db = join(dn_db_y, dn_uv)
 
 
-    final = adaptive_grain(dn_db, strength=[1.8, 0.36], size=3.26, temporal_average=50, seed=274810, **ntype4)
+    final = adaptive_grain(dn_db, strength=[1.9, 0.38], size=3.26, temporal_average=50, seed=274810, **ntype4)
 
     final = finalize_clip(final)
+
+    final_test = adaptive_grain_test(dn_db, strength=[2.1, 0.42], size=3.26, temporal_average=50, seed=274810, **ntype4)
+    
+    final_test = finalize_clip(final_test)
 
 
     if is_preview():
@@ -94,6 +99,8 @@ def filterchain(source):
         set_output(core.akarin.Expr([dn_db, aa], ["x y - 10 * 32768 +"]), "dn_db")
         set_output(final, "final")
         set_output(core.akarin.Expr([depth(final, 16), dn_db], ["x y - 10 * 32768 +"]), "final")
+        set_output(final_test, "final_test")
+        set_output(core.akarin.Expr([depth(final_test, 16), dn_db], ["x y - 10 * 32768 +"]), "final_test")
 
 
     return FilterchainResults(src=src, final=final, audio=amzn_file)
