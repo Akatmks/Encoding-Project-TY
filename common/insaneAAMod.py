@@ -124,7 +124,7 @@ def insaneAA(clip: VideoNode, external_aa: VideoNode = None, external_mask: Vide
              eedi3_mode: Union[EEDI3Mode, Tuple[EEDI3Mode, EEDI3Mode]] = EEDI3Mode.CPU, eedi3_device: Union[int, Tuple[int, int]] = -1, eedi3_opt: Union[int, Tuple[int, int]] = 0,
              nnedi3_mode: Union[NNEDI3Mode, Tuple[NNEDI3Mode, NNEDI3Mode]] = NNEDI3Mode.ZNEDI3, nnedi3_device: Union[int, Tuple[int, int]] = -1, nnedi3_opt: Union[int, str, Tuple[Union[int, str], Union[int, str]]] = 0,
              descale_strength: float = 0.3, kernel: str = 'bilinear', bicubic_b: float = 1/3, bicubic_c: float = 1/3, lanczos_taps: int = 3, descale_width: int = None, descale_height: int = 720, pscrn: int = 1,
-             alpha: float = 0.2, beta: float = 0.25, gamma: float = 1000.0, nrad: int = 2, mdis: float = 20, nsize: int = 0, nns: int = 4, dehalo: bool = False,
+             alpha: float = 0.2, beta: float = 0.25, gamma: float = 1000.0, nrad: int = 2, mdis: float = 20, nsize: int = 0, nns: int = 4, dehalo = False,
              output_mode: ClipMode = ClipMode.FULL, input_mode: ClipMode = ClipMode.FULL) -> VideoNode:
     if not isinstance(clip, VideoNode):
         raise TypeError('insaneAA: this is not a clip.')
@@ -142,8 +142,9 @@ def insaneAA(clip: VideoNode, external_aa: VideoNode = None, external_mask: Vide
         return upscale
     if not isinstance(external_aa, VideoNode) or input_mode in [ClipMode.UNMASKED, 1, "unmasked"]:
         if not isinstance(external_mask, VideoNode):
-            linemask = core.std.Sobel(
-                gray_clip).std.Expr("x 2 *").std.Maximum()
+            from vsmasktools import Morpho
+            linemask = core.std.Sobel(gray_clip).akarin.Expr("x 2 *")
+            linemask = Morpho.inflate(linemask, radius=2)
         else:
             linemask = external_mask
         aa_clip = core.std.MaskedMerge(gray_clip, upscale, linemask)
@@ -155,7 +156,7 @@ def insaneAA(clip: VideoNode, external_aa: VideoNode = None, external_mask: Vide
         return core.std.ShufflePlanes([aa_clip, clip], planes=[0, 1, 2], colorfamily=YUV)
 
 
-def revert_upscale(clip: VideoNode, descale_strength: float = 0.3, kernel: str = 'bilinear', descale_width: int = None, descale_height: int = 720, bicubic_b: float = 1/3, bicubic_c: float = 1/3, lanczos_taps: int = 3, dehalo: bool = False) -> VideoNode:
+def revert_upscale(clip: VideoNode, descale_strength: float = 0.3, kernel: str = 'bilinear', descale_width: int = None, descale_height: int = 720, bicubic_b: float = 1/3, bicubic_c: float = 1/3, lanczos_taps: int = 3, dehalo = False) -> VideoNode:
     width = clip.width
     height = clip.height
     descale_width = m4((width * descale_height) /
@@ -168,8 +169,7 @@ def revert_upscale(clip: VideoNode, descale_strength: float = 0.3, kernel: str =
     descale_mix = core.std.Expr([descale_natural, descale_smooth],
                                 'x {strength} * y 1 {strength} - * +'.format(strength=descale_strength))
     if dehalo:
-        from vsdehalo import fine_dehalo
-        descale_mix = fine_dehalo(descale_mix, thmi=45, thma=128, thlimi=60, thlima=120)
+        descale_mix = dehalo(descale_mix)
     return descale_mix
 
 

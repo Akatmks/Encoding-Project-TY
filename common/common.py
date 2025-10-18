@@ -1,6 +1,8 @@
-from vsdenoise import bm3d, mc_degrain, nl_means
 from pydantic import BaseModel, ConfigDict
 from vsdeband import placebo_deband
+from vsdehalo import fine_dehalo
+from vsdenoise import bm3d, mc_degrain, nl_means
+from functools import partial
 from vskernels import Lanczos
 from vsmasktools import Morpho
 import vsmlrt
@@ -55,8 +57,7 @@ def filterchain(source):
     cclip = cclip.std.Crop(top=4, bottom=4)
     cclip = depth(cclip, 16, dither_type=DitherType.NONE)
 
-
-    aa = insaneAA(src, descale_height=864, dehalo=True, alpha=0.75, beta=0.15, nrad=3, mdis=30)
+    aa = insaneAA(src, descale_height=864, descale_strength=0.4, dehalo=partial(fine_dehalo, highsens=85, brighstr=0.85, rx=3, ry=3, thmi=50, thma=128, thlimi=60, thlima=120), alpha=0.75, beta=0.15, nrad=3, mdis=30)
 
     rescale = Rescale(src, height=864, width=1536, kernel=Lanczos(2)).rescale
     aa_mask = descale_error_mask(src, rescale, thr=0.01, expands=(5, 6, 1), blur=2, tr=2)
