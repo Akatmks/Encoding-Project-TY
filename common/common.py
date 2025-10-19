@@ -4,7 +4,7 @@ from vsdehalo import fine_dehalo
 from vsdenoise import bm3d, Prefilter, mc_degrain, nl_means
 from functools import partial
 from vskernels import Lanczos
-from vsmasktools import Morpho, Sobel
+from vsmasktools import Morpho
 import vsmlrt
 from muxtools import Setup
 from muxtools import mux as vsmux
@@ -59,9 +59,9 @@ def filterchain(source, trim):
 
 
     src_y = get_y(src)
-    edgemask = Sobel().edgemask(src_y)
-    edgemask = Morpho.deflate(edgemask, radius=1)
-    edgemask = edgemask.akarin.Expr("x 1800 > x 0 ? 3 *")
+    edgemask = src_y.warp.ASobel(thresh=255)
+    edgemask = edgemask.akarin.Expr("x 4500 > x 6000 > x 2 * x ? 0 ?")
+    edgemask = edgemask.rgvs.RemoveGrain(mode=3)
     edgemask = Morpho.inflate(edgemask, radius=1)
     rescale = Rescale(src, height=864, width=1536, kernel=Lanczos(2)).rescale
     errormask = descale_error_mask(src, rescale, thr=0.025, expands=(7, 7, 3), blur=3, tr=2)
