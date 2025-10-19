@@ -88,7 +88,7 @@ def filterchain(source):
     dn_db = join(dn_db_y, dn_uv)
 
 
-    final = adaptive_grain(dn_db, strength=[1.9, 0.38], size=3.26, temporal_average=50, seed=274810, **ntype4)
+    final = adaptive_grain(dn_db, strength=[2.0, 0.40], size=3.26, temporal_average=50, seed=274810, **ntype4)
 
     final = finalize_clip(final)
 
