@@ -20,11 +20,10 @@ else:
     source_dir = SPath(os.environ["SOURCE_DIR"])
 
 episode = "03"
-source_varyg = source_dir / f"[VARYG] {episode}.mkv"
-source_new = source_dir / f"[New-raws] {episode}.mkv"
+source = source_dir / f"[VARYG] {episode}.mkv"
 trim = (120, None)
 
-filterchain_results = filterchain(source_varyg, source_new, trim)
+filterchain_results = filterchain(source, trim)
 
 if not is_preview():
     if "__main__" in dir(__main__): 

@@ -1,7 +1,7 @@
 from pydantic import BaseModel, ConfigDict
 from vsdeband import pfdeband, placebo_deband
 from vsdehalo import fine_dehalo
-from vsdenoise import bm3d, DFTTest, frequency_merge, Prefilter, mc_degrain, nl_means
+from vsdenoise import bm3d, Prefilter, mc_degrain, nl_means
 from functools import partial
 from vskernels import Lanczos
 from vsmasktools import Morpho, Sobel
@@ -18,20 +18,15 @@ from .vodesfuncNoiseMod import adaptive_grain, ntype4
 
 
 class FilterchainResults(BaseModel):
-    src: vs.VideoNode
     final: vs.VideoNode
     audio: src_file
 
     model_config = ConfigDict(arbitrary_types_allowed=True)
 
 
-def filterchain(source_varyg, source_new, trim):
-    varyg_file = src_file(source_varyg, trim=trim, preview_sourcefilter=SourceFilter.BESTSOURCE)
-    new_file = src_file(source_new, trim=trim, preview_sourcefilter=SourceFilter.BESTSOURCE)
-    varyg_src = varyg_file.init_cut()
-    new_src = new_file.init_cut()
-
-    src = frequency_merge(varyg_src, new_src, lowpass=lambda clip: DFTTest().denoise(clip))
+def filterchain(source, trim):
+    source_file = src_file(source, trim=trim, preview_sourcefilter=SourceFilter.BESTSOURCE)
+    src = source_file.init_cut()
 
 
     cclip = src.resize.Bicubic(filter_param_a=0, filter_param_b=0.5, \
@@ -111,7 +106,7 @@ def filterchain(source_varyg, source_new, trim):
         set_output(core.akarin.Expr([depth(final, 16), dn_db], ["x y - 10 * 32768 +"]), "final")
 
 
-    return FilterchainResults(src=src, final=final, audio=varyg_file)
+    return FilterchainResults(final=final, audio=source_file)
     
 
 def mux(episode, filterchain_results):
