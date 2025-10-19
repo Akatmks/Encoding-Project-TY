@@ -79,7 +79,7 @@ def filterchain(source, trim):
     aa_y = get_y(aa)
     b_dn_y = bm3d(aa_y, ref=ref_y, sigma=0.8, tr=2, profile=bm3d.Profile.NORMAL)
     
-    c_dn_y = bm3d(aa_y, ref=ref_y, sigma=2.2, tr=1, profile=bm3d.Profile.NORMAL)
+    c_dn_y = bm3d(aa_y, ref=ref_y, sigma=2.1, tr=1, profile=bm3d.Profile.NORMAL)
     c_db_y = pfdeband(c_dn_y, thr=2.0, debander=placebo_deband)
 
     dn_db_y = core.std.MaskedMerge(b_dn_y, c_db_y, cclip)
@@ -89,7 +89,7 @@ def filterchain(source, trim):
     dn_db = join(dn_db_y, dn_uv)
 
 
-    final = adaptive_grain(dn_db, strength=[2.0, 0.40], size=3.26, temporal_average=50, seed=274810, **ntype4)
+    final = adaptive_grain(dn_db, strength=[2.1, 0.42], size=3.26, temporal_average=50, seed=274810, **ntype4)
 
     final = finalize_clip(final)
 
