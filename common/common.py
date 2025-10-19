@@ -63,8 +63,14 @@ def filterchain(source, trim):
     edgemask = edgemask.akarin.Expr("x 1800 > x 0 ? 3 *")
     edgemask = Morpho.inflate(edgemask, radius=1)
     rescale = Rescale(src, height=864, width=1536, kernel=Lanczos(2)).rescale
-    errormask = descale_error_mask(src, rescale, thr=0.025, expands=(32, 32, 3), blur=2, tr=2)
-    aamask = core.akarin.Expr([edgemask, cclip, errormask], "x y z - 65535 / *")
+    errormask = descale_error_mask(src, rescale, thr=0.025, expands=(8, 8, 3), blur=2, tr=2)
+    aamask = core.akarin.Expr([cclip, errormask], "x 1 y 65535 / - *")
+    aamask = aamask.std.PlaneStats(prop="MaskedCharacter")
+    aamask = core.akarin.PropExpr([aamask, cclip], lambda: dict(MaskedHiritsu="""
+    y.CharacterAverage 0 = 0 x.MaskedCharacterAverage y.CharacterAverage / ? cont!
+    0.97 cont@ - 0 max 10 * 1 min 1 swap -
+    """))
+    aamask = core.akarin.Expr([edgemask, aamask], "x 65535 y - - y.MaskedHiritsu *")
 
     aa_y = insaneAA(src_y, external_mask=aamask,
                            descale_height=864, descale_strength=0.4,
