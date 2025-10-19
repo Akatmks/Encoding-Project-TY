@@ -55,6 +55,7 @@ def filterchain(source, trim):
     cclip = Morpho.inflate(cclip, radius=3)
     cclip = cclip.std.Crop(top=4, bottom=4)
     cclip = depth(cclip, 16, dither_type=DitherType.NONE)
+    cclip = cclip.std.PlaneStats(prop="Character")
 
 
     src_y = get_y(src)
@@ -63,20 +64,21 @@ def filterchain(source, trim):
     edgemask = edgemask.akarin.Expr("x 1800 > x 0 ? 3 *")
     edgemask = Morpho.inflate(edgemask, radius=1)
     rescale = Rescale(src, height=864, width=1536, kernel=Lanczos(2)).rescale
-    errormask = descale_error_mask(src, rescale, thr=0.025, expands=(8, 8, 3), blur=2, tr=2)
+    errormask = descale_error_mask(src, rescale, thr=0.025, expands=(7, 7, 3), blur=3, tr=2)
     aamask = core.akarin.Expr([cclip, errormask], "x 1 y 65535 / - *")
     aamask = aamask.std.PlaneStats(prop="MaskedCharacter")
     aamask = core.akarin.PropExpr([aamask, cclip], lambda: dict(MaskedHiritsu="""
-    y.CharacterAverage 0 = 0 x.MaskedCharacterAverage y.CharacterAverage / ? cont!
-    0.97 cont@ - 0 max 10 * 1 min 1 swap -
+    y.CharacterAverage 0 = 1 x.MaskedCharacterAverage y.CharacterAverage / ? cont!
+    0.983 cont@ - 0 max 10 * 1 min 1 swap -
     """))
-    aamask = core.akarin.Expr([edgemask, aamask], "x 65535 y - - y.MaskedHiritsu *")
+    aamask = core.akarin.Expr([aamask, edgemask], "y 65535 x - - x.MaskedHiritsu *")
 
     aa_y = insaneAA(src_y, external_mask=aamask,
                            descale_height=864, descale_strength=0.4,
                            dehalo=partial(fine_dehalo, highsens=85, brighstr=0.55, rx=1, ry=1, thmi=45, thma=128, thlimi=60, thlima=120),
                            alpha=0.75, beta=0.15, nrad=3, mdis=30)
     aa = join(aa_y, src)
+    if is_preview(): aa = core.akarin.PropExpr([aa, aamask], lambda: dict(MaskedHiritsu="y.MaskedHiritsu"))
 
 
     ref = mc_degrain(aa, prefilter=Prefilter.DFTTEST(), tr=2, thsad=140)
