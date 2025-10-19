@@ -4,7 +4,7 @@ from vsdehalo import fine_dehalo
 from vsdenoise import bm3d, mc_degrain, nl_means
 from functools import partial
 from vskernels import Lanczos
-from vsmasktools import Morpho
+from vsmasktools import Morpho, Sobel
 import vsmlrt
 from muxtools import Setup
 from muxtools import mux as vsmux
@@ -57,13 +57,19 @@ def filterchain(source):
     cclip = cclip.std.Crop(top=4, bottom=4)
     cclip = depth(cclip, 16, dither_type=DitherType.NONE)
 
-    aa = insaneAA(src, descale_height=864, descale_strength=0.4, dehalo=partial(fine_dehalo, highsens=85, brighstr=0.85, rx=3, ry=3, thmi=50, thma=128, thlimi=60, thlima=120), alpha=0.75, beta=0.15, nrad=3, mdis=30)
 
+    edgemask = Sobel().edgemask(get_y(src))
+    edgemask = Morpho.deflate(edgemask, radius=1)
+    edgemask = edgemask.akarin.Expr("x 800 > x 0 ? 3 *")
+    edgemask = Morpho.inflate(edgemask, radius=1)
     rescale = Rescale(src, height=864, width=1536, kernel=Lanczos(2)).rescale
-    aa_mask = descale_error_mask(src, rescale, thr=0.01, expands=(5, 6, 1), blur=2, tr=2)
-    aa_mask = core.akarin.Expr([cclip, aa_mask], "x y -")
+    errormask = descale_error_mask(src, rescale, thr=0.01, expands=(5, 6, 1), blur=2, tr=2)
+    aamask = core.akarin.Expr([edgemask, cclip, errormask], "x y z - 65535 / *")
 
-    aa = core.std.MaskedMerge(src, aa, aa_mask)
+    aa = insaneAA(src, external_mask=aamask,
+                       descale_height=864, descale_strength=0.4,
+                       dehalo=partial(fine_dehalo, highsens=85, brighstr=0.85, rx=3, ry=3, thmi=50, thma=128, thlimi=60, thlima=120),
+                       alpha=0.75, beta=0.15, nrad=3, mdis=30)
 
 
     ref = mc_degrain(aa, tr=2, thsad=140)
@@ -72,8 +78,8 @@ def filterchain(source):
     aa_y = get_y(aa)
     b_dn_y = bm3d(aa_y, ref=ref_y, sigma=0.7, tr=2, profile=bm3d.Profile.NORMAL)
     
-    c_dn_y = bm3d(aa_y, ref=ref_y, sigma=2.2, tr=1, profile=bm3d.Profile.NORMAL)
-    c_db_y = placebo_deband(c_dn_y, radius=24.0)
+    c_dn_y = bm3d(aa_y, ref=ref_y, sigma=2.1, tr=1, profile=bm3d.Profile.NORMAL)
+    c_db_y = placebo_deband(c_dn_y)
 
     dn_db_y = core.std.MaskedMerge(b_dn_y, c_db_y, cclip)
 
@@ -82,7 +88,7 @@ def filterchain(source):
     dn_db = join(dn_db_y, dn_uv)
 
 
-    final = adaptive_grain(dn_db, strength=[2.1, 0.42], size=3.26, temporal_average=50, seed=274810, **ntype4)
+    final = adaptive_grain(dn_db, strength=[1.9, 0.38], size=3.26, temporal_average=50, seed=274810, **ntype4)
 
     final = finalize_clip(final)
 

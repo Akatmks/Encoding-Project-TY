@@ -142,9 +142,8 @@ def insaneAA(clip: VideoNode, external_aa: VideoNode = None, external_mask: Vide
         return upscale
     if not isinstance(external_aa, VideoNode) or input_mode in [ClipMode.UNMASKED, 1, "unmasked"]:
         if not isinstance(external_mask, VideoNode):
-            from vsmasktools import Morpho
-            linemask = core.std.Sobel(gray_clip).akarin.Expr("x 2 *")
-            linemask = Morpho.inflate(linemask, radius=2)
+            linemask = core.std.Sobel(
+                gray_clip).std.Expr("x 2 *").std.Maximum()
         else:
             linemask = external_mask
         aa_clip = core.std.MaskedMerge(gray_clip, upscale, linemask)

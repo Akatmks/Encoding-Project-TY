@@ -20,7 +20,7 @@ else:
     assert "SOURCE" in os.environ, "You need to either pass the source video via commandline parameters, or via environmental variable \"SOURCE\""
     source = SPath(os.environ["SOURCE"])
 
-assert (m := re.search(r"e - ([\d\.]+) \(1080p\) \[", source.stem)), "Invalid source video filename"
+assert (m := re.search(r"e - ([\d\.]+) \[1080p A", source.stem)), "Invalid source video filename"
 episode = m.group(1)
 
 filterchain_results = filterchain(source)
