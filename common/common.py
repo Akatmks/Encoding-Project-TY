@@ -77,9 +77,9 @@ def filterchain(source, trim):
     ref_y = get_y(ref)
     
     aa_y = get_y(aa)
-    b_dn_y = bm3d(aa_y, ref=ref_y, sigma=0.82, tr=2, profile=bm3d.Profile.NORMAL)
+    b_dn_y = bm3d(aa_y, ref=ref_y, sigma=0.8, tr=2, profile=bm3d.Profile.NORMAL)
     
-    c_dn_y = bm3d(aa_y, ref=ref_y, sigma=2.02, tr=2, profile=bm3d.Profile.NORMAL)
+    c_dn_y = bm3d(aa_y, ref=ref_y, sigma=2.2, tr=1, profile=bm3d.Profile.NORMAL)
     c_db_y = pfdeband(c_dn_y, thr=2.0, debander=placebo_deband)
 
     dn_db_y = core.std.MaskedMerge(b_dn_y, c_db_y, cclip)
@@ -95,9 +95,7 @@ def filterchain(source, trim):
 
 
     if is_preview():
-        set_output(varyg_src, "varyg_src")
-        set_output(new_src, "new_src")
-        set_output(src, "frequency_merge")
+        set_output(src, "src")
         set_output(aa, "aa")
         set_output(core.akarin.Expr([aa, src], ["x y - 10 * 32768 +"]), "aa")
         set_output(dn_db, "dn_db")
