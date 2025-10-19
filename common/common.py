@@ -63,7 +63,7 @@ def filterchain(source, trim):
     edgemask = edgemask.akarin.Expr("x 1800 > x 0 ? 3 *")
     edgemask = Morpho.inflate(edgemask, radius=1)
     rescale = Rescale(src, height=864, width=1536, kernel=Lanczos(2)).rescale
-    errormask = descale_error_mask(src, rescale, thr=0.025, expands=(10, 10, 3), blur=2, tr=2)
+    errormask = descale_error_mask(src, rescale, thr=0.025, expands=(32, 32, 3), blur=2, tr=2)
     aamask = core.akarin.Expr([edgemask, cclip, errormask], "x y z - 65535 / *")
 
     aa_y = insaneAA(src_y, external_mask=aamask,
