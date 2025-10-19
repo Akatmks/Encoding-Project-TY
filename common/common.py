@@ -68,7 +68,7 @@ def filterchain(source, trim):
 
     aa_y = insaneAA(src_y, external_mask=aamask,
                            descale_height=864, descale_strength=0.4,
-                           dehalo=partial(fine_dehalo, highsens=85, brighstr=0.55, rx=1, ry=1, thmi=50, thma=128, thlimi=60, thlima=120),
+                           dehalo=partial(fine_dehalo, highsens=85, brighstr=0.55, rx=1, ry=1, thmi=45, thma=128, thlimi=60, thlima=120),
                            alpha=0.75, beta=0.15, nrad=3, mdis=30)
     aa = join(aa_y, src)
 
