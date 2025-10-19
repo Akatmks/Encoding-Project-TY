@@ -84,7 +84,7 @@ def filterchain(source_varyg, source_new, trim):
     aa_y = get_y(aa)
     b_dn_y = bm3d(aa_y, ref=ref_y, sigma=0.7, tr=2, profile=bm3d.Profile.NORMAL)
     
-    c_dn_y = bm3d(aa_y, ref=ref_y, sigma=2.1, tr=1, profile=bm3d.Profile.NORMAL)
+    c_dn_y = bm3d(aa_y, ref=ref_y, sigma=2.0, tr=2, profile=bm3d.Profile.NORMAL)
     c_db_y = pfdeband(c_dn_y, thr=2.0, debander=placebo_deband)
 
     dn_db_y = core.std.MaskedMerge(b_dn_y, c_db_y, cclip)
@@ -124,4 +124,4 @@ def mux(episode, filterchain_results):
     audio = do_audio(filterchain_results.audio)
 
     return vsmux(video.to_track(lang="ja", args=["--deterministic", "274810"]),
-               audio.to_track(lang="ja"))
+                 audio.to_track(lang="ja"))
