@@ -1,7 +1,7 @@
 from pydantic import BaseModel, ConfigDict
 from vsdeband import pfdeband, placebo_deband
 from vsdehalo import fine_dehalo
-from vsdenoise import bm3d, DFTTest, frequency_merge, mc_degrain, nl_means
+from vsdenoise import bm3d, DFTTest, frequency_merge, Prefilter, mc_degrain, nl_means
 from functools import partial
 from vskernels import Lanczos
 from vsmasktools import Morpho, Sobel
@@ -78,7 +78,7 @@ def filterchain(source_varyg, source_new, trim):
     aa = join(aa_y, src)
 
 
-    ref = mc_degrain(aa, tr=2, thsad=140)
+    ref = mc_degrain(aa, prefilter=Prefilter.DFTTEST(), tr=2, thsad=140)
     ref_y = get_y(ref)
     
     aa_y = get_y(aa)
