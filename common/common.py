@@ -51,8 +51,8 @@ def filterchain(source, trim):
     cluster@ 0.10 > high@ 0.95 < and continue@ 0.75 < and continue@ 1.333333333333 * 3 pow 3 pow 0.75 * continue@ ? continue!
     continue@ 0.10 > continue@ 0 ?
     """)
-    cclip = Morpho.dilation(cclip, radius=2)
-    cclip = Morpho.inflate(cclip, radius=2)
+    cclip = Morpho.dilation(cclip, radius=1)
+    cclip = Morpho.inflate(cclip, radius=3)
     cclip = cclip.std.Crop(top=4, bottom=4)
     cclip = depth(cclip, 16, dither_type=DitherType.NONE)
 
