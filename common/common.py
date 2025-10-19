@@ -58,18 +58,20 @@ def filterchain(source):
     cclip = depth(cclip, 16, dither_type=DitherType.NONE)
 
 
-    edgemask = Sobel().edgemask(get_y(src))
+    src_y = get_y(src)
+    edgemask = Sobel().edgemask(src_y)
     edgemask = Morpho.deflate(edgemask, radius=1)
-    edgemask = edgemask.akarin.Expr("x 800 > x 0 ? 3 *")
+    edgemask = edgemask.akarin.Expr("x 1800 > x 0 ? 3 *")
     edgemask = Morpho.inflate(edgemask, radius=1)
     rescale = Rescale(src, height=864, width=1536, kernel=Lanczos(2)).rescale
     errormask = descale_error_mask(src, rescale, thr=0.01, expands=(5, 6, 1), blur=2, tr=2)
     aamask = core.akarin.Expr([edgemask, cclip, errormask], "x y z - 65535 / *")
 
-    aa = insaneAA(src, external_mask=aamask,
-                       descale_height=864, descale_strength=0.4,
-                       dehalo=partial(fine_dehalo, highsens=85, brighstr=0.85, rx=3, ry=3, thmi=50, thma=128, thlimi=60, thlima=120),
-                       alpha=0.75, beta=0.15, nrad=3, mdis=30)
+    aa_y = insaneAA(src_y, external_mask=aamask,
+                           descale_height=864, descale_strength=0.4,
+                           dehalo=partial(fine_dehalo, highsens=85, brighstr=0.85, rx=3, ry=3, thmi=50, thma=128, thlimi=60, thlima=120),
+                           alpha=0.75, beta=0.15, nrad=3, mdis=30)
+    aa = join(aa_y, src)
 
 
     ref = mc_degrain(aa, tr=2, thsad=140)
