@@ -1,7 +1,7 @@
 from pydantic import BaseModel, ConfigDict
 from vsdeband import pfdeband, placebo_deband
 from vsdehalo import fine_dehalo
-from vsdenoise import bm3d, mc_degrain, nl_means
+from vsdenoise import bm3d, DFTTest, frequency_merge, mc_degrain, nl_means
 from functools import partial
 from vskernels import Lanczos
 from vsmasktools import Morpho, Sobel
@@ -25,10 +25,14 @@ class FilterchainResults(BaseModel):
     model_config = ConfigDict(arbitrary_types_allowed=True)
 
 
-def filterchain(source):
-    amzn_file = src_file(source, preview_sourcefilter=SourceFilter.BESTSOURCE)
-    src = amzn_file.init_cut()
-    
+def filterchain(source_varyg, source_new, trim):
+    varyg_file = src_file(source_varyg, trim=trim, preview_sourcefilter=SourceFilter.BESTSOURCE)
+    new_file = src_file(source_new, trim=trim, preview_sourcefilter=SourceFilter.BESTSOURCE)
+    varyg_src = varyg_file.init_cut()
+    new_src = new_file.init_cut()
+
+    src = frequency_merge(varyg_src, new_src, lowpass=lambda clip: DFTTest().denoise(clip))
+
 
     cclip = src.resize.Bicubic(filter_param_a=0, filter_param_b=0.5, \
                                width=1920, height=1088, src_left=0, src_top=-4, src_width=1920, src_height=1088, \
@@ -96,7 +100,9 @@ def filterchain(source):
 
 
     if is_preview():
-        set_output(src, "src")
+        set_output(varyg_src, "varyg_src")
+        set_output(new_src, "new_src")
+        set_output(src, "frequency_merge")
         set_output(aa, "aa")
         set_output(core.akarin.Expr([aa, src], ["x y - 10 * 32768 +"]), "aa")
         set_output(dn_db, "dn_db")
@@ -105,7 +111,7 @@ def filterchain(source):
         set_output(core.akarin.Expr([depth(final, 16), dn_db], ["x y - 10 * 32768 +"]), "final")
 
 
-    return FilterchainResults(src=src, final=final, audio=amzn_file)
+    return FilterchainResults(src=src, final=final, audio=varyg_file)
     
 
 def mux(episode, filterchain_results):
