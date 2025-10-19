@@ -82,9 +82,9 @@ def filterchain(source_varyg, source_new, trim):
     ref_y = get_y(ref)
     
     aa_y = get_y(aa)
-    b_dn_y = bm3d(aa_y, ref=ref_y, sigma=0.7, tr=2, profile=bm3d.Profile.NORMAL)
+    b_dn_y = bm3d(aa_y, ref=ref_y, sigma=0.82, tr=2, profile=bm3d.Profile.NORMAL)
     
-    c_dn_y = bm3d(aa_y, ref=ref_y, sigma=2.0, tr=2, profile=bm3d.Profile.NORMAL)
+    c_dn_y = bm3d(aa_y, ref=ref_y, sigma=2.02, tr=2, profile=bm3d.Profile.NORMAL)
     c_db_y = pfdeband(c_dn_y, thr=2.0, debander=placebo_deband)
 
     dn_db_y = core.std.MaskedMerge(b_dn_y, c_db_y, cclip)
