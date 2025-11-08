@@ -24,9 +24,14 @@ class FilterchainResults(BaseModel):
     model_config = ConfigDict(arbitrary_types_allowed=True)
 
 
-def filterchain(source, trim):
+def filterchain(source, trim, audio_source=None):
     source_file = src_file(source, trim=trim, preview_sourcefilter=SourceFilter.BESTSOURCE)
     src = source_file.init_cut()
+
+    if audio_source is not None:
+        audio_source_file = src_file(audio_source, preview_sourcefilter=SourceFilter.BESTSOURCE)
+    else:
+        audio_source_file = source_file
 
 
     cclip = src.resize.Bicubic(filter_param_a=0, filter_param_b=0.5, \
@@ -112,7 +117,7 @@ def filterchain(source, trim):
         set_output(core.akarin.Expr([depth(final, 16), dn_db], ["x y - 10 * 32768 +"]), "final")
 
 
-    return FilterchainResults(final=final, audio=source_file)
+    return FilterchainResults(final=final, audio=audio_source_file)
     
 
 def mux(episode, filterchain_results):
